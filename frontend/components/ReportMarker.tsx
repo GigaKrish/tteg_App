@@ -31,9 +31,8 @@ const ReportMarkerComponent = ({ report, onPress, overrideColor }: { report: any
 
       <Callout>
         <View style={styles.bubble}>
-          <Text style={styles.title}>{report.cameraType || "Camera"} | {report.city || "Unknown"}</Text>
+          <Text style={styles.title}>{report.cameraType || "Camera"}</Text>
           <Text style={styles.meta}>ID: {report.unique_id || report.resourceId || 'N/A'}</Text>
-          <Text style={styles.meta}>{report.district || "Unknown District"}, {report.state || ""}</Text>
           <Text style={styles.meta}>{new Date(report.createdAt).toLocaleString()}</Text>
           <Text style={styles.coords}>{truncCoord(report.location.latitude)}, {truncCoord(report.location.longitude)}</Text>
         </View>

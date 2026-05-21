@@ -145,9 +145,6 @@ async function processImage(fileBuffer, latitude, longitude, metadata = {}) {
     // Embed custom metadata to EXIF UserComment if needed
     if (metadata.cameraType || metadata.resourceId) {
        const userCommentText = JSON.stringify({
-          state: metadata.state,
-          city: metadata.city,
-          district: metadata.district,
           cameraType: metadata.cameraType,
           resourceId: metadata.resourceId,
           remark: metadata.remark

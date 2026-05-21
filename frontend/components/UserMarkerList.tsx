@@ -111,7 +111,7 @@ export const UserMarkerList: React.FC<UserMarkerListProps> = ({
                                             <Ionicons name="time-outline" size={10} /> {(() => { const d = new Date(m.createdAt); const date = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`; let h = d.getHours(); const ampm = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; const time = `${String(h).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}:${String(d.getSeconds()).padStart(2, '0')} ${ampm}`; return `${date} ${time}`; })()}
                                         </Text>
                                         <Text style={[styles.metaDataText, { marginTop: 4, fontWeight: 'bold' }]}>
-                                            {m.cameraType} | {m.city}, {m.state}
+                                            {m.cameraType}
                                         </Text>
                                     </View>
 

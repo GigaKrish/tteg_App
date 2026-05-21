@@ -20,9 +20,6 @@ exports.createReport = async (req, res, next) => {
       latitude,
       longitude,
       readableAddress,
-      state,
-      city,
-      district,
       cameraType,
       resourceId,
       remark,
@@ -68,9 +65,6 @@ exports.createReport = async (req, res, next) => {
         accuracy: accuracyValue,
         gpsSource: 'geotron',
         timestamp: new Date().toISOString(), // Trust ONLY server time
-        state,
-        city,
-        district,
         cameraType,
         resourceId,
         remark,
@@ -96,9 +90,6 @@ exports.createReport = async (req, res, next) => {
       userId: req.userId,
       photos: photoUrls,
       thumbnails: thumbnailUrls,
-      state,
-      city,
-      district,
       cameraType,
       resourceId,
       remark,
@@ -161,7 +152,7 @@ exports.getUserMarkers = async (req, res, next) => {
 
     const total = await Report.countDocuments(filter);
     const markers = await Report.find(filter)
-      .select('location createdAt photos thumbnails readableAddress state city district cameraType resourceId remark accuracy unique_id geotronLocations')
+      .select('location createdAt photos thumbnails readableAddress cameraType resourceId remark accuracy unique_id geotronLocations')
       .sort({ createdAt: -1 })
       .skip((pageNum - 1) * limitNum)
       .limit(limitNum)

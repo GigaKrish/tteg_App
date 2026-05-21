@@ -33,7 +33,6 @@ export const UserProfilePanel: React.FC<UserProfilePanelProps> = ({ visible, use
                         <MaterialIcons name="person" size={32} color="#fff" />
                     </View>
                     <Text style={styles.userPanelName}>{user?.fullName || 'User'}</Text>
-                    {user?.surveyID && <Text style={styles.userPanelSurveyId}>Surveyor ID: {user.surveyID}</Text>}
                     <Text style={styles.userPanelEmail}>{user?.email || ''}</Text>
 
                     <Pressable style={styles.panelLogoutBtn} onPress={onLogout}>
@@ -54,7 +53,6 @@ const styles = StyleSheet.create({
     closeUserPanelBtn: { position: 'absolute', top: 15, left: 20, padding: 8 },
     userAvatar: { width: 60, height: 60, borderRadius: 30, backgroundColor: '#3b82f6', justifyContent: 'center', alignItems: 'center', marginBottom: 16 },
     userPanelName: { fontSize: 17, fontWeight: '800', color: '#1e293b', marginBottom: 4, textAlign: 'center' },
-    userPanelSurveyId: { fontSize: 13, color: '#3b82f6', fontWeight: '700', textAlign: 'center', marginBottom: 2, backgroundColor: '#eff6ff', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, overflow: 'hidden' },
     userPanelEmail: { fontSize: 13, color: '#64748b', fontWeight: '500', textAlign: 'center' },
     panelLogoutBtn: { marginTop: 20, backgroundColor: "#fee2e2", paddingVertical: 12, paddingHorizontal: 24, borderRadius: 25, flexDirection: 'row', alignItems: 'center', gap: 8 },
     panelLogoutTxt: { fontWeight: "700", color: "#ff3b30", fontSize: 15 },

@@ -13,8 +13,7 @@ const generateToken = (user) => {
       userId: user._id,
       email: user.email,
       fullName: user.fullName,
-      assignedGeotrons: user.assignedGeotrons,
-      surveyID: user.surveyID
+      assignedGeotrons: user.assignedGeotrons
     },
     process.env.JWT_SECRET,
     { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
@@ -79,8 +78,7 @@ exports.login = async (req, res, next) => {
         _id: user._id,
         fullName: user.fullName,
         email: user.email,
-        assignedGeotrons: user.assignedGeotrons,
-        surveyID: user.surveyID
+        assignedGeotrons: user.assignedGeotrons
       }
     });
   } catch (error) {

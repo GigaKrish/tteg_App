@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView, Image,
   Alert, InteractionManager, Modal, Dimensions, StatusBar, Pressable
@@ -11,11 +11,8 @@ import { FormPicker } from './ui/FormPicker';
 const CAMERA_TYPES = ['PTZ Camera', 'Bullet Camera', 'UHD Camera', 'Dome Camera'];
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-// ── Session-level memoization (lives in JS memory, cleared on app close) ──
-let sessionCache: { state: string; city: string; district: string } | null = null;
-
 export function clearSessionFormCache() {
-  sessionCache = null;
+  // No-op: session cache removed (state/city/district no longer collected)
 }
 
 interface Props {
@@ -32,9 +29,7 @@ interface Props {
 export default function ReportFormModal({
   visible, isTemporarilyHidden, onCancel, onSubmit, onAddPhoto, onRemovePhoto, photos = [], loading
 }: Props) {
-  const [stateName, setStateName] = useState('');
-  const [cityName, setCityName] = useState('');
-  const [district, setDistrict] = useState('');
+
   const [cameraType, setCameraType] = useState('');
   const [resourceId, setResourceId] = useState('');
   const [remark, setRemark] = useState('');
@@ -43,31 +38,14 @@ export default function ReportFormModal({
   const [showPreview, setShowPreview] = useState(false);
   const [fullscreenPhoto, setFullscreenPhoto] = useState<string | null>(null);
 
-  // Load memoized data when the modal opens
-  useEffect(() => {
-    if (visible && sessionCache) {
-      setStateName(prev => prev || sessionCache!.state);
-      setCityName(prev => prev || sessionCache!.city);
-      setDistrict(prev => prev || sessionCache!.district);
-    }
-  }, [visible]);
+
 
   const resetFormFields = () => {
     setCameraType('');
     setResourceId('');
     setRemark('');
-    // Keep State/City/District since they are memoized
   };
 
-  const handleResetAll = () => {
-    setStateName('');
-    setCityName('');
-    setDistrict('');
-    setCameraType('');
-    setResourceId('');
-    setRemark('');
-    sessionCache = null;
-  };
 
   useEffect(() => {
     if (!visible && !isTemporarilyHidden) {
@@ -80,7 +58,7 @@ export default function ReportFormModal({
   }, [visible, isTemporarilyHidden]);
 
   const validate = () => {
-    if (!stateName || !cityName || !district || !cameraType || !resourceId) {
+    if (!cameraType || !resourceId) {
       Alert.alert("Missing Fields", "Please fill all the required fields.");
       return false;
     }
@@ -93,17 +71,12 @@ export default function ReportFormModal({
 
   const handlePreview = () => {
     if (validate()) {
-      // Save State/City/District to session cache for next report
-      sessionCache = { state: stateName, city: cityName, district };
       setShowPreview(true);
     }
   };
 
   const handleFinalSubmit = () => {
     onSubmit({
-      state: stateName,
-      city: cityName,
-      district,
       cameraType,
       resourceId,
       remark
@@ -134,27 +107,6 @@ export default function ReportFormModal({
           {/* Data Summary Card */}
           <View style={pv.card}>
             <Text style={pv.cardTitle}>Asset Details</Text>
-
-            <View style={pv.row}>
-              <Ionicons name="location" size={16} color="#6366f1" />
-              <Text style={pv.label}>State</Text>
-              <Text style={pv.value}>{stateName}</Text>
-            </View>
-            <View style={pv.divider} />
-
-            <View style={pv.row}>
-              <Ionicons name="business" size={16} color="#6366f1" />
-              <Text style={pv.label}>City</Text>
-              <Text style={pv.value}>{cityName}</Text>
-            </View>
-            <View style={pv.divider} />
-
-            <View style={pv.row}>
-              <Ionicons name="map" size={16} color="#6366f1" />
-              <Text style={pv.label}>District</Text>
-              <Text style={pv.value}>{district}</Text>
-            </View>
-            <View style={pv.divider} />
 
             <View style={pv.row}>
               <Ionicons name="videocam" size={16} color="#6366f1" />
@@ -224,31 +176,10 @@ export default function ReportFormModal({
   return (
     <BaseModal visible={visible} onClose={onCancel} title="New Asset Report">
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Top Actions Row */}
-        <View style={styles.topActionsRow}>
-          {/* Memoization hint */}
-          <View style={{ flex: 1 }}>
-            {sessionCache && (
-              <View style={styles.memoHint}>
-                <Ionicons name="flash" size={14} color="#6366f1" />
-                <Text style={styles.memoHintText} numberOfLines={2}>State, City & District auto-filled</Text>
-              </View>
-            )}
-          </View>
 
-          {/* Reset Form Button */}
-          <TouchableOpacity style={styles.resetBtn} onPress={handleResetAll}>
-            <Ionicons name="refresh" size={14} color="#ef4444" />
-            <Text style={styles.resetBtnText}>Reset</Text>
-          </TouchableOpacity>
-        </View>
 
         <View style={styles.stepContainer}>
           <Text style={styles.stepTitle}>Asset Details</Text>
-
-          <FormInput label="State *" placeholder="e.g. Maharashtra" value={stateName} onChangeText={setStateName} />
-          <FormInput label="City *" placeholder="e.g. Mumbai" value={cityName} onChangeText={setCityName} />
-          <FormInput label="District *" placeholder="e.g. Mumbai Suburban" value={district} onChangeText={setDistrict} />
 
           <FormPicker
             label="Camera Type *"
@@ -342,19 +273,6 @@ const pv = StyleSheet.create({
 // ── Form styles ──
 const styles = StyleSheet.create({
   scrollContent: { padding: 16, paddingBottom: 40 },
-  topActionsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 12,
-    gap: 12
-  },
-  resetBtn: {
-    flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8,
-    backgroundColor: '#fef2f2', borderWidth: 1, borderColor: '#fecaca',
-  },
-  resetBtnText: { color: '#ef4444', fontWeight: '600', fontSize: 12, marginLeft: 4 },
   stepContainer: {
     backgroundColor: '#fff', padding: 16, borderRadius: 12, marginBottom: 16,
     borderWidth: 1, borderColor: '#e2e8f0', shadowColor: '#000',
@@ -379,12 +297,6 @@ const styles = StyleSheet.create({
     position: 'absolute', bottom: 4, right: 4, backgroundColor: 'rgba(239,68,68,0.9)',
     padding: 6, borderRadius: 6
   },
-  memoHint: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: '#eef2ff',
-    padding: 8, borderRadius: 8, gap: 6, flex: 1,
-    borderWidth: 1, borderColor: '#c7d2fe',
-  },
-  memoHintText: { fontSize: 11, color: '#4f46e5', fontWeight: '600', flex: 1 },
   footer: {
     flexDirection: 'row', padding: 16, backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#e2e8f0', gap: 12
   },

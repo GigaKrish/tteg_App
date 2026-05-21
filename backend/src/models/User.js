@@ -3,11 +3,7 @@ const bcrypt = require("bcryptjs");
 
 const userSchema = new mongoose.Schema(
     {
-        surveyID: {
-            type: String,
-            unique: true,
-            index: true
-        },
+
         fullName: {
             type: String,
             required: [true, "Full name is required"],
@@ -40,13 +36,7 @@ const userSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
-// Auto-generate surveyID (U001, U002...) for new users
-userSchema.pre("validate", async function () {
-    if (this.isNew && !this.surveyID) {
-        const count = await mongoose.model("User").countDocuments();
-        this.surveyID = `U${String(count + 1).padStart(3, "0")}`;
-    }
-});
+
 
 /**
  * Pre-save hook: Hash password before saving to database

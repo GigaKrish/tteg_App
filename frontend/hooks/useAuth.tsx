@@ -103,7 +103,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await SecureStore.deleteItemAsync(STORAGE_KEYS.USER_DATA);
     // Clear cached zone/ward data so next user gets fresh data
     await AsyncStorage.removeItem('cached_zones_wards').catch(() => {});
-    // Clear memoized form fields (State/City/District)
+    // Clear memoized form fields
     clearSessionFormCache();
     router.replace('/login');
   };

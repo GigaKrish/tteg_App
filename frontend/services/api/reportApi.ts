@@ -98,9 +98,7 @@ export const reportApi = {
     // Add TTEG-specific fields from surveyData
     if (data.surveyData) {
       const survey = typeof data.surveyData === 'string' ? JSON.parse(data.surveyData) : data.surveyData;
-      formData.append('state', survey.state || '');
-      formData.append('city', survey.city || '');
-      formData.append('district', survey.district || '');
+
       formData.append('cameraType', survey.cameraType || '');
       formData.append('resourceId', survey.resourceId || '');
       formData.append('remark', survey.remark || '');

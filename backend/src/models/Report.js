@@ -8,10 +8,8 @@ const reportSchema = new mongoose.Schema({
     required: true,
   },
 
-  // --- NEW FIELDS ---
-  state: { type: String, required: true },
-  city: { type: String, required: true },
-  district: { type: String, required: true },
+
+  // --- TTEG FIELDS ---
   cameraType: { 
     type: String, 
     required: true,

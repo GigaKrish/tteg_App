@@ -34,5 +34,5 @@ export interface UploadReportData {
   photoUris: string[];
   geotronData: string;
   roleMap?: string;  // JSON string of deviceId → role mapping
-  surveyData?: string; // JSON string of { state, city, district, cameraType, resourceId, remark }
+  surveyData?: string; // JSON string of { cameraType, resourceId, remark }
 }

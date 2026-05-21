@@ -10,7 +10,7 @@ export interface User {
   fullName: string;
   email: string;
   assignedGeotrons: GeotronAssignment[];
-  surveyID?: string;
+
 }
 
 export interface AuthResponse {
@@ -29,9 +29,7 @@ export interface Report {
     longitude: number;
     readableAddress?: string;
   };
-  state: string;
-  city: string;
-  district: string;
+
   cameraType: string;
   resourceId: string;
   remark?: string;
@@ -74,9 +72,7 @@ export interface Marker {
   };
   photos: string[];
   thumbnails?: string[];
-  state: string;
-  city: string;
-  district: string;
+
   cameraType: string;
   resourceId: string;
   remark?: string;
