@@ -1,4 +1,4 @@
-import { View, StyleSheet, Pressable } from 'react-native';
+import { View, StyleSheet, Pressable, Alert } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useRef, useState, useEffect } from 'react';
 import * as ImageManipulator from 'expo-image-manipulator';
@@ -44,18 +44,19 @@ export default function CameraOverlay({ onCapture, onClose }: CameraOverlayProps
     try {
       const photo = await cameraRef.current.takePictureAsync({ quality: 0.8 });
       if (photo?.uri && isMountedRef.current) {
-        
-        // Ensure image width never exceeds 1080p, vastly reducing payload sizes.
+
+        // expo-image-manipulator@14.x (SDK 54) — uses manipulateAsync
         const manipResult = await ImageManipulator.manipulateAsync(
-            photo.uri,
-            [{ resize: { width: 1080 } }],
-            { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
+          photo.uri,
+          [{ resize: { width: 1080 } }],
+          { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
         );
 
         onCapture(manipResult.uri);
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error('Camera capture error:', e);
+      Alert.alert('Capture Failed', e?.message || 'Could not process the photo. Please try again.');
     } finally {
       if (isMountedRef.current) {
         setIsCapturing(false);

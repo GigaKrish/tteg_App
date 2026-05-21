@@ -107,15 +107,30 @@ export const reportApi = {
     // Add metadata
     formData.append('geotronLocations', JSON.stringify(roleKeyedLocations));
 
-    // Add device info
-    formData.append('deviceInfo', JSON.stringify({
-      os: Platform.OS === 'ios' ? 'iOS' : 'Android',
-      osVersion: Device.osVersion || null,
-      manufacturer: Device.manufacturer || null,
-      brand: Device.brand || null,
-      modelName: Device.modelName || null,
-      deviceName: Device.deviceName || null,
-    }));
+    // Add device info — wrapped in try-catch because Device.deviceName
+    // can throw on some Android 10 OEM skins (Samsung, Xiaomi) that
+    // enforce BLUETOOTH permission for reading the user-set device name.
+    let deviceInfo: Record<string, any> = {};
+    try {
+      deviceInfo = {
+        os: Platform.OS === 'ios' ? 'iOS' : 'Android',
+        osVersion: Device.osVersion || null,
+        manufacturer: Device.manufacturer || null,
+        brand: Device.brand || null,
+        modelName: Device.modelName || null,
+        deviceName: Device.deviceName || null,
+      };
+    } catch (e) {
+      deviceInfo = {
+        os: Platform.OS === 'ios' ? 'iOS' : 'Android',
+        osVersion: Device.osVersion || null,
+        manufacturer: Device.manufacturer || null,
+        brand: Device.brand || null,
+        modelName: Device.modelName || null,
+        deviceName: null,
+      };
+    }
+    formData.append('deviceInfo', JSON.stringify(deviceInfo));
 
     // 5. Upload to server
     return apiClient.postFormData('/api/upload', formData, true, signal);

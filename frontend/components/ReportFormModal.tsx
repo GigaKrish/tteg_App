@@ -25,10 +25,16 @@ interface Props {
   photos?: string[];
   loading?: boolean;
   onCancelUpload?: () => void;
+  locationData?: {
+    latitude: number;
+    longitude: number;
+    altitude?: number;
+    accuracy?: number;
+  } | null;
 }
 
 export default function ReportFormModal({
-  visible, isTemporarilyHidden, onCancel, onSubmit, onAddPhoto, onRemovePhoto, photos = [], loading, onCancelUpload
+  visible, isTemporarilyHidden, onCancel, onSubmit, onAddPhoto, onRemovePhoto, photos = [], loading, onCancelUpload, locationData
 }: Props) {
 
   const [cameraType, setCameraType] = useState('');
@@ -131,6 +137,27 @@ export default function ReportFormModal({
                 </View>
               </>
             ) : null}
+            
+            {locationData && (
+              <>
+                <View style={pv.divider} />
+                <View style={pv.row}>
+                  <Ionicons name="location" size={16} color="#6366f1" />
+                  <Text style={pv.label}>Location</Text>
+                  <Text style={pv.value}>{locationData.latitude}, {locationData.longitude}</Text>
+                </View>
+                <View style={pv.row}>
+                  <Ionicons name="analytics" size={16} color="#6366f1" />
+                  <Text style={pv.label}>Altitude</Text>
+                  <Text style={pv.value}>{locationData.altitude != null ? `${locationData.altitude.toFixed(1)}m` : 'N/A'}</Text>
+                </View>
+                <View style={pv.row}>
+                  <Ionicons name="contract" size={16} color="#6366f1" />
+                  <Text style={pv.label}>Control Val</Text>
+                  <Text style={pv.value}>{locationData.accuracy != null ? `${(locationData.accuracy * 100).toFixed(1)}cm` : 'N/A'}</Text>
+                </View>
+              </>
+            )}
           </View>
 
           {/* Photos */}

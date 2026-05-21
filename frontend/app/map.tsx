@@ -21,8 +21,8 @@ import { useUserLocation } from '../hooks/useUserLocation';
 import { useAuth } from '../hooks/useAuth';
 import { useGeotronPolling } from '../hooks/useGeotronPolling';
 import { reportApi } from '../services/api/reportApi';
-import { API_URL } from '../utils/constants';
 import { uploadQueue } from '../services/uploadQueue/queueManager';
+import { locationProcessor } from '../services/location/locationProcessor';
 import { truncCoord, normalizeGeotronAssignments } from '../utils/formatters';
 
 const DEV_BYPASS_GEOTRON = false;
@@ -549,17 +549,46 @@ export default function MapScreen() {
             />
 
             {/* --- MODALS & LIST --- */}
-            <ReportFormModal
-                visible={showFormModal && !showCamera}
-                isTemporarilyHidden={showCamera}
-                onCancel={handleFormCancel}
-                onSubmit={handleSubmit}
-                onAddPhoto={proceedToCamera}
-                onRemovePhoto={handleRemovePhoto}
-                photos={photos}
-                loading={isUploading}
-                onCancelUpload={handleCancelUpload}
-            />
+            {(() => {
+                let previewLocationData: any = null;
+                const activeGeotronSource = lockedGeotronData || (DEV_BYPASS_GEOTRON ? DEV_MOCK_GEOTRON_DATA : multiDeviceData);
+                if (showFormModal && activeGeotronSource && Object.keys(activeGeotronSource).length > 0) {
+                    const proc = locationProcessor.processLocation(JSON.stringify(activeGeotronSource), JSON.stringify(roleMap));
+                    if (proc.usedGeotron) {
+                        let acc: number | undefined;
+                        let alt: number | undefined;
+                        const midDevId = Object.entries(roleMap).find(([_, r]) => r === 'MID')?.[0];
+                        if (midDevId && activeGeotronSource[midDevId]) {
+                            acc = activeGeotronSource[midDevId].accuracy;
+                            alt = activeGeotronSource[midDevId].altitude;
+                        } else {
+                            const firstDev = Object.values(activeGeotronSource)[0] as any;
+                            acc = firstDev?.accuracy;
+                            alt = firstDev?.altitude;
+                        }
+                        previewLocationData = {
+                            latitude: proc.finalLatitude,
+                            longitude: proc.finalLongitude,
+                            altitude: alt,
+                            accuracy: acc,
+                        };
+                    }
+                }
+                return (
+                    <ReportFormModal
+                        visible={showFormModal && !showCamera}
+                        isTemporarilyHidden={showCamera}
+                        onCancel={handleFormCancel}
+                        onSubmit={handleSubmit}
+                        onAddPhoto={proceedToCamera}
+                        onRemovePhoto={handleRemovePhoto}
+                        photos={photos}
+                        loading={isUploading}
+                        onCancelUpload={handleCancelUpload}
+                        locationData={previewLocationData}
+                    />
+                );
+            })()}
 
             <UserMarkerList
                 visible={showMarkerList}

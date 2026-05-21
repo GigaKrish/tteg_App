@@ -157,7 +157,7 @@ export default function GeotronStatusModal({
                           <StatItem label="Latitude" value={truncCoord(dev.latitude)} />
                           <StatItem label="Longitude" value={truncCoord(dev.longitude)} />
                           <StatItem
-                            label="Accuracy"
+                            label="Control Value"
                             value={dev.accuracy != null
                               ? `${(dev.accuracy * 100).toFixed(2)} cm`
                               : '--'

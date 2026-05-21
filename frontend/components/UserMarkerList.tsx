@@ -153,13 +153,13 @@ export const UserMarkerList: React.FC<UserMarkerListProps> = ({
                                     {/* ── Metadata ── */}
                                     <View style={{ marginBottom: 6, borderBottomWidth: 1, borderBottomColor: '#eee', paddingBottom: 6 }}>
                                         <Text style={styles.metaDataText}>
-                                            <Ionicons name="location-outline" size={10} /> Lat: {truncCoord(m.location.latitude)}, Long: {truncCoord(m.location.longitude)}
+                                            <Ionicons name="location-outline" size={10} /> Lat: {truncCoord(m.location?.latitude)}, Long: {truncCoord(m.location?.longitude)}
                                         </Text>
                                         <Text style={[styles.metaDataText, { marginTop: 2 }]}>
-                                            <Ionicons name="navigate-circle-outline" size={10} /> Acc: {m.accuracy != null ? `${(m.accuracy * 100).toFixed(1)}cm` : 'N/A'}
+                                            <Ionicons name="navigate-circle-outline" size={10} /> Control Val: {m.accuracy != null ? `${(m.accuracy * 100).toFixed(1)}cm` : 'N/A'}
                                         </Text>
                                         <Text style={[styles.metaDataText, { marginTop: 2 }]}>
-                                            <Ionicons name="time-outline" size={10} /> {(() => { const d = new Date(m.createdAt); const date = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`; let h = d.getHours(); const ampm = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; const time = `${String(h).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}:${String(d.getSeconds()).padStart(2, '0')} ${ampm}`; return `${date} ${time}`; })()}
+                                            <Ionicons name="time-outline" size={10} /> {(() => { try { const d = new Date(m.createdAt); const date = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`; let h = d.getHours(); const ampm = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; const time = `${String(h).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}:${String(d.getSeconds()).padStart(2, '0')} ${ampm}`; return `${date} ${time}`; } catch { return 'Unknown'; } })()}
                                         </Text>
                                         <Text style={[styles.metaDataText, { marginTop: 4, fontWeight: 'bold' }]}>
                                             {m.cameraType}

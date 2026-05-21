@@ -115,7 +115,7 @@ function createWatermarkSvg(width, height, metadata) {
       <text x="${col1Val}" y="${row1}" class="wm-val">${latStr}</text>
       <text x="${col2}" y="${row1}" class="wm-lbl">Long:</text>
       <text x="${col2Val}" y="${row1}" class="wm-val">${lngStr}</text>
-      <text x="${col1}" y="${row2}" class="wm-lbl">Acc:</text>
+      <text x="${col1}" y="${row2}" class="wm-lbl">Control Val:</text>
       <text x="${col1Val}" y="${row2}" class="wm-val">${accStr}</text>
       <text x="${col2}" y="${row2}" class="wm-lbl">GPS:</text>
       <text x="${col2Val}" y="${row2}" class="wm-val">${sourceStr}</text>
