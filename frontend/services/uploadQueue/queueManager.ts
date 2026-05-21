@@ -78,7 +78,10 @@ class UploadQueueManager {
   }
 
   // SIMPLIFIED: Direct upload without timeout - let the actual request handle its own timing
-  async tryDirectUploadOrQueue(upload: Omit<QueuedUpload, 'id' | 'timestamp' | 'status' | 'attempts' | 'maxAttempts'>): Promise<{ success: boolean; uploadId: string; error?: string }> {
+  async tryDirectUploadOrQueue(
+    upload: Omit<QueuedUpload, 'id' | 'timestamp' | 'status' | 'attempts' | 'maxAttempts'>,
+    signal?: AbortSignal
+  ): Promise<{ success: boolean; uploadId: string; error?: string }> {
     const uploadId = `upload_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
     try {
@@ -92,7 +95,7 @@ class UploadQueueManager {
       };
 
       // Direct upload - no artificial timeout, let network handle it
-      const result = await reportApi.uploadReport(formData);
+      const result = await reportApi.uploadReport(formData, signal);
 
       if (result && result.success) {
         console.log(`[Queue] ✅ Direct upload successful: ${uploadId}`);
@@ -103,36 +106,42 @@ class UploadQueueManager {
 
     } catch (error: any) {
       console.log(`[Queue] ❌ Direct upload failed: ${error.message}`);
+      
+      // Do not queue if the request was cancelled by the user
+      if (error.name === 'AbortError' || error.message?.includes('aborted')) {
+        console.log(`[Queue] Upload cancelled by user: ${uploadId}`);
+        return { success: false, uploadId, error: 'Upload cancelled by user' };
+      }
 
       // Only queue for network/server errors, not validation errors
       if (this.isRetryableError(error)) {
         // Enforce max queue size to prevent unbounded growth
         if (this.queue.length >= MAX_QUEUE_SIZE) {
           console.log(`[Queue] Queue full (${MAX_QUEUE_SIZE}), dropping upload`);
-        return { success: false, uploadId, error: `Queue full (max ${MAX_QUEUE_SIZE}). Clear failed uploads first.` };
+          return { success: false, uploadId, error: `Queue full (max ${MAX_QUEUE_SIZE}). Clear failed uploads first.` };
+        }
+
+        const queuedUpload: QueuedUpload = {
+          ...upload,
+          id: uploadId,
+          timestamp: Date.now(),
+          status: 'pending',
+          attempts: 0,
+          maxAttempts: MAX_RETRIES,
+          lastError: error.message,
+        };
+
+        this.queue.push(queuedUpload);
+        await this.saveQueue();
+
+        // Process queue in background
+        this.processQueueInBackground();
+
+        return { success: false, uploadId, error: error.message };
+      } else {
+        // Non-retryable error (like validation), don't queue
+        return { success: false, uploadId, error: error.message };
       }
-
-      const queuedUpload: QueuedUpload = {
-        ...upload,
-        id: uploadId,
-        timestamp: Date.now(),
-        status: 'pending',
-        attempts: 0,
-        maxAttempts: MAX_RETRIES,
-        lastError: error.message,
-      };
-
-      this.queue.push(queuedUpload);
-      await this.saveQueue();
-
-      // Process queue in background
-      this.processQueueInBackground();
-
-      return { success: false, uploadId, error: error.message };
-    } else {
-      // Non-retryable error (like validation), don't queue
-      return { success: false, uploadId, error: error.message };
-    }
     }
   }
 

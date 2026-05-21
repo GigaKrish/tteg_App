@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView, Image,
-  Alert, InteractionManager, Modal, Dimensions, StatusBar, Pressable
+  Alert, InteractionManager, Modal, Dimensions, StatusBar, Pressable, ActivityIndicator
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { BaseModal } from './ui/BaseModal';
@@ -24,10 +24,11 @@ interface Props {
   onRemovePhoto?: (index: number) => void;
   photos?: string[];
   loading?: boolean;
+  onCancelUpload?: () => void;
 }
 
 export default function ReportFormModal({
-  visible, isTemporarilyHidden, onCancel, onSubmit, onAddPhoto, onRemovePhoto, photos = [], loading
+  visible, isTemporarilyHidden, onCancel, onSubmit, onAddPhoto, onRemovePhoto, photos = [], loading, onCancelUpload
 }: Props) {
 
   const [cameraType, setCameraType] = useState('');
@@ -81,7 +82,6 @@ export default function ReportFormModal({
       resourceId,
       remark
     });
-    setShowPreview(false);
   };
 
   // ── Fullscreen Photo Viewer ──
@@ -168,6 +168,25 @@ export default function ReportFormModal({
             <Text style={[styles.submitBtnText, { marginLeft: 6 }]}>{loading ? 'Uploading...' : 'Confirm & Submit'}</Text>
           </TouchableOpacity>
         </View>
+
+        {/* ── Upload Progress Overlay ── */}
+        {loading && (
+          <Modal transparent visible animationType="fade">
+            <View style={fs.loadingOverlayContainer}>
+              <View style={fs.loadingBox}>
+                <ActivityIndicator size="large" color="#2196F3" />
+                <Text style={fs.loadingOverlayText}>Uploading Report...</Text>
+                <Text style={fs.loadingOverlaySubText}>Please do not close the app.</Text>
+                
+                {onCancelUpload && (
+                  <TouchableOpacity style={fs.cancelUploadBtn} onPress={onCancelUpload}>
+                    <Text style={fs.cancelUploadBtnText}>Cancel</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            </View>
+          </Modal>
+        )}
       </BaseModal>
     );
   }
@@ -236,11 +255,27 @@ export default function ReportFormModal({
   );
 }
 
-// ── Fullscreen photo viewer styles ──
+// ── Fullscreen photo viewer & Loading styles ──
 const fs = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center' },
   image: { width: SCREEN_WIDTH, height: SCREEN_HEIGHT },
   closeBtn: { position: 'absolute', top: 50, right: 20, zIndex: 10 },
+  loadingOverlayContainer: { 
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', 
+    justifyContent: 'center', alignItems: 'center' 
+  },
+  loadingBox: { 
+    backgroundColor: 'white', padding: 24, borderRadius: 16, 
+    alignItems: 'center', width: '80%', elevation: 10, shadowColor: '#000', 
+    shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8 
+  },
+  loadingOverlayText: { fontSize: 16, fontWeight: '700', color: '#1e293b', marginTop: 16 },
+  loadingOverlaySubText: { fontSize: 12, color: '#64748b', marginTop: 8, textAlign: 'center' },
+  cancelUploadBtn: { 
+    marginTop: 20, paddingVertical: 10, paddingHorizontal: 24, 
+    borderRadius: 8, backgroundColor: '#fef2f2', borderWidth: 1, borderColor: '#fecaca' 
+  },
+  cancelUploadBtnText: { color: '#ef4444', fontWeight: '600', fontSize: 14 }
 });
 
 // ── Preview styles ──

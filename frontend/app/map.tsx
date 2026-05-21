@@ -41,8 +41,8 @@ const DEV_MOCK_GEOTRON_DATA: Record<string, any> = DEV_BYPASS_GEOTRON ? {
 
 
 export default function MapScreen() {
-    // Track which zone folder is currently expanded
     const mapRef = useRef<any>(null);
+    const abortControllerRef = useRef<AbortController | null>(null);
     const { location } = useUserLocation();
     const { user, logout, refreshUser } = useAuth();
 
@@ -347,6 +347,9 @@ export default function MapScreen() {
         setIsUploading(true);
         const prop = propertyToUpload;
 
+        // Reset controller for a new upload
+        abortControllerRef.current = new AbortController();
+
         try {
             const geotronSource = lockedGeotronData || (DEV_BYPASS_GEOTRON ? DEV_MOCK_GEOTRON_DATA : multiDeviceData);
 
@@ -363,7 +366,10 @@ export default function MapScreen() {
             };
 
             // Try direct upload first, only queue if it fails
-            const result = await uploadQueue.tryDirectUploadOrQueue(uploadData);
+            const result = await uploadQueue.tryDirectUploadOrQueue(
+                uploadData,
+                abortControllerRef.current.signal
+            );
 
             if (result.success) {
                 Alert.alert("Success", "Report uploaded successfully!");
@@ -380,6 +386,12 @@ export default function MapScreen() {
                 setLockedGeotronData(null);
 
             } else {
+                // Check if user manually cancelled
+                if (result.error === 'Upload cancelled by user') {
+                    // Do not close form or clear data, just let the user stay on the form
+                    return;
+                }
+
                 // Upload failed, added to queue for retry
                 Alert.alert(
                     "Upload Queued",
@@ -412,7 +424,15 @@ export default function MapScreen() {
             Alert.alert("Error", "Failed to process upload. Please try again.");
         } finally {
             setIsUploading(false);
+            abortControllerRef.current = null;
         }
+    };
+
+    const handleCancelUpload = () => {
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+        setIsUploading(false);
     };
 
 
@@ -538,6 +558,7 @@ export default function MapScreen() {
                 onRemovePhoto={handleRemovePhoto}
                 photos={photos}
                 loading={isUploading}
+                onCancelUpload={handleCancelUpload}
             />
 
             <UserMarkerList

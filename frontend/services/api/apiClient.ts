@@ -56,7 +56,8 @@ class ApiClient {
   async postFormData<T>(
     endpoint: string,
     formData: FormData,
-    requiresAuth: boolean = true
+    requiresAuth: boolean = true,
+    signal?: AbortSignal
   ): Promise<T> {
     const token = await SecureStore.getItemAsync(STORAGE_KEYS.USER_TOKEN);
     const headers: HeadersInit = {};
@@ -69,6 +70,7 @@ class ApiClient {
       method: 'POST',
       headers,
       body: formData,
+      signal,
     });
 
     return this.handleResponse<T>(response);

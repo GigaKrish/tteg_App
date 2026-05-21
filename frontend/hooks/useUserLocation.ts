@@ -13,9 +13,9 @@ export const useUserLocation = () => {
         return;
       }
 
-      // Stable, high accuracy
+      // Use balanced accuracy (network/wifi) since we rely on Geotron for precise coords
       const loc = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.High,
+        accuracy: Location.Accuracy.Balanced,
       });
       setLocation(loc);
     } catch (e) {

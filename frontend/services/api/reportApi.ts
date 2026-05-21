@@ -39,7 +39,7 @@ export const reportApi = {
   /**
    * Upload a new report with photos
    */
-  async uploadReport(data: UploadReportData): Promise<{ success: boolean; report: Report }> {
+  async uploadReport(data: UploadReportData, signal?: AbortSignal): Promise<{ success: boolean; report: Report }> {
     // 1. Process location entirely from geotron data (MID priority, fallback to any device)
     const processedLocation = locationProcessor.processLocation(
       data.geotronData,
@@ -118,7 +118,7 @@ export const reportApi = {
     }));
 
     // 5. Upload to server
-    return apiClient.postFormData('/api/upload', formData);
+    return apiClient.postFormData('/api/upload', formData, true, signal);
   },
 
   /**
