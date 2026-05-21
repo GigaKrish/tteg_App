@@ -94,7 +94,7 @@ function createWatermarkSvg(width, height, metadata) {
 
   // Column offsets (proportional to box width)
   const col1 = x + innerPad;
-  const col1Val = col1 + Math.round(boxWidth * 0.11);
+  const col1Val = col1 + Math.round(boxWidth * 0.18); // Increased from 0.11 to fit 'Ctrl Val:'
   const col2 = x + Math.round(boxWidth * 0.50);
   const col2Val = col2 + Math.round(boxWidth * 0.12);
 
@@ -115,7 +115,7 @@ function createWatermarkSvg(width, height, metadata) {
       <text x="${col1Val}" y="${row1}" class="wm-val">${latStr}</text>
       <text x="${col2}" y="${row1}" class="wm-lbl">Long:</text>
       <text x="${col2Val}" y="${row1}" class="wm-val">${lngStr}</text>
-      <text x="${col1}" y="${row2}" class="wm-lbl">Control Val:</text>
+      <text x="${col1}" y="${row2}" class="wm-lbl">Ctrl Val:</text>
       <text x="${col1Val}" y="${row2}" class="wm-val">${accStr}</text>
       <text x="${col2}" y="${row2}" class="wm-lbl">GPS:</text>
       <text x="${col2Val}" y="${row2}" class="wm-val">${sourceStr}</text>
