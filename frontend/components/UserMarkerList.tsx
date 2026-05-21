@@ -1,7 +1,9 @@
-import React from 'react';
-import { View, Text, Pressable, ScrollView, Image, ActivityIndicator, StyleSheet, Platform } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, Pressable, ScrollView, Image, ActivityIndicator, StyleSheet, Platform, Modal, StatusBar, Dimensions, TouchableOpacity } from 'react-native';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { truncCoord } from '../utils/formatters';
+
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 interface UserMarkerListProps {
     visible: boolean;
@@ -26,6 +28,39 @@ export const UserMarkerList: React.FC<UserMarkerListProps> = ({
     onSetExpandedMarkerId,
     onDeleteEntry,
 }) => {
+    // Fullscreen photo viewer state
+    const [fullscreenPhoto, setFullscreenPhoto] = useState<string | null>(null);
+    const [photoLoading, setPhotoLoading] = useState(false);
+
+    if (!visible && !fullscreenPhoto) return null;
+
+    // ── Fullscreen Photo Viewer ──
+    if (fullscreenPhoto) {
+        return (
+            <Modal visible animationType="fade" statusBarTranslucent>
+                <StatusBar hidden />
+                <View style={fsStyles.container}>
+                    {photoLoading && (
+                        <View style={fsStyles.loadingOverlay}>
+                            <ActivityIndicator size="large" color="#fff" />
+                            <Text style={fsStyles.loadingText}>Loading full photo...</Text>
+                        </View>
+                    )}
+                    <Image
+                        source={{ uri: fullscreenPhoto }}
+                        style={fsStyles.image}
+                        resizeMode="contain"
+                        onLoadStart={() => setPhotoLoading(true)}
+                        onLoadEnd={() => setPhotoLoading(false)}
+                    />
+                    <TouchableOpacity style={fsStyles.closeBtn} onPress={() => { setFullscreenPhoto(null); setPhotoLoading(false); }}>
+                        <Ionicons name="close-circle" size={36} color="white" />
+                    </TouchableOpacity>
+                </View>
+            </Modal>
+        );
+    }
+
     if (!visible) return null;
 
     return (
@@ -60,12 +95,15 @@ export const UserMarkerList: React.FC<UserMarkerListProps> = ({
                     const themeColor = isHardware ? '#4CD964' : '#2196F3';
                     const serialNum = markers.length - index;
 
+                    // Resolve full photo URLs — prefer photos array over thumbnails for fullscreen
+                    const fullPhotos: string[] = m.photos && m.photos.length > 0 ? m.photos : [];
+
                     return (
                         <View key={m._id} style={styles.markerItemContainer}>
                             <View style={styles.markerItemRow}>
                                 <Pressable style={{ flex: 1 }} onPress={() => onGoToMarker(m)}>
                                     <Text numberOfLines={1} style={[styles.markerTitle, { color: themeColor }]}>
-                                        {m.resourceId || m.unique_id || `Asset ${serialNum}`}
+                                        ID: {m.unique_id || serialNum}
                                     </Text>
                                 </Pressable>
 
@@ -80,18 +118,30 @@ export const UserMarkerList: React.FC<UserMarkerListProps> = ({
 
                             {isExpanded && (
                                 <View style={styles.expandedDetailsContainer}>
+
+                                    {/* ── Thumbnails ── */}
                                     <View style={{ flexDirection: 'row', marginBottom: 8 }}>
                                         <View style={{ flex: 1 }}>
                                             {m.thumbnails && m.thumbnails.length > 0 ? (
                                                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                                                     {m.thumbnails.map((url: string, i: number) => (
-                                                        <Image key={i} source={{ uri: url }} style={styles.listThumb} />
+                                                        <Pressable key={i} onPress={() => setFullscreenPhoto(fullPhotos[i] || url)}>
+                                                            <Image source={{ uri: url }} style={styles.listThumb} />
+                                                            <View style={styles.thumbExpandIcon}>
+                                                                <Ionicons name="expand" size={10} color="white" />
+                                                            </View>
+                                                        </Pressable>
                                                     ))}
                                                 </ScrollView>
                                             ) : m.photos && m.photos.length > 0 ? (
                                                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                                                     {m.photos.map((url: string, i: number) => (
-                                                        <Image key={i} source={{ uri: url }} style={styles.listThumb} />
+                                                        <Pressable key={i} onPress={() => setFullscreenPhoto(url)}>
+                                                            <Image source={{ uri: url }} style={styles.listThumb} />
+                                                            <View style={styles.thumbExpandIcon}>
+                                                                <Ionicons name="expand" size={10} color="white" />
+                                                            </View>
+                                                        </Pressable>
                                                     ))}
                                                 </ScrollView>
                                             ) : (
@@ -100,6 +150,7 @@ export const UserMarkerList: React.FC<UserMarkerListProps> = ({
                                         </View>
                                     </View>
 
+                                    {/* ── Metadata ── */}
                                     <View style={{ marginBottom: 6, borderBottomWidth: 1, borderBottomColor: '#eee', paddingBottom: 6 }}>
                                         <Text style={styles.metaDataText}>
                                             <Ionicons name="location-outline" size={10} /> Lat: {truncCoord(m.location.latitude)}, Long: {truncCoord(m.location.longitude)}
@@ -113,6 +164,11 @@ export const UserMarkerList: React.FC<UserMarkerListProps> = ({
                                         <Text style={[styles.metaDataText, { marginTop: 4, fontWeight: 'bold' }]}>
                                             {m.cameraType}
                                         </Text>
+                                        {m.resourceId ? (
+                                            <Text style={[styles.metaDataText, { marginTop: 2 }]}>
+                                                Resource ID: {m.resourceId}
+                                            </Text>
+                                        ) : null}
                                     </View>
 
                                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
@@ -140,6 +196,18 @@ export const UserMarkerList: React.FC<UserMarkerListProps> = ({
     );
 };
 
+// ── Fullscreen photo viewer styles ──
+const fsStyles = StyleSheet.create({
+    container: { flex: 1, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center' },
+    image: { width: SCREEN_WIDTH, height: SCREEN_HEIGHT },
+    closeBtn: { position: 'absolute', top: 50, right: 20, zIndex: 10 },
+    loadingOverlay: {
+        position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+        justifyContent: 'center', alignItems: 'center', zIndex: 5,
+    },
+    loadingText: { color: '#ccc', fontSize: 13, marginTop: 10, fontWeight: '500' },
+});
+
 const styles = StyleSheet.create({
     markerListOverlay: { position: "absolute", top: 180, left: 20, backgroundColor: "#fff", width: 240, maxHeight: 400, borderRadius: 15, elevation: 10, padding: 15 },
     listHeader: { fontWeight: '800', marginBottom: 10, color: '#1e3a8a', fontSize: 14 },
@@ -152,6 +220,11 @@ const styles = StyleSheet.create({
     miniTag: { backgroundColor: '#f1f5f9', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, marginRight: 5, marginTop: -3 },
     miniTagText: { fontSize: 10, fontWeight: 'bold', color: '#64748b' },
     listThumb: { width: 80, height: 60, borderRadius: 6, marginRight: 5, backgroundColor: '#eee' },
+    thumbExpandIcon: {
+        position: 'absolute', bottom: 2, right: 7,
+        backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 4,
+        padding: 2,
+    },
     noImageBox: { width: '100%', height: 40, backgroundColor: '#f0f0f0', borderRadius: 6, justifyContent: 'center', alignItems: 'center' },
     metaDataText: { fontSize: 10, color: '#64748b', fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace' },
 });

@@ -77,31 +77,50 @@ function createWatermarkSvg(width, height, metadata) {
     hour: '2-digit', minute: '2-digit', second: '2-digit'
   }) : 'N/A';
 
-  const padding = 60;
-  const boxWidth = 1120;
-  const boxHeight = 340;
-  const x = width - boxWidth - padding;
-  const y = height - boxHeight - padding;
+  // ── Responsive sizing: scale watermark to ~55% of image width, capped ──
+  const scale = Math.min(width / 1920, 1);           // 1.0 at 1920px, 0.625 at 1200px, etc.
+  const fontSize = Math.max(Math.round(40 * scale), 18); // Min 18px font
+  const lineHeight = Math.round(fontSize * 1.8);
+  const padding = Math.round(40 * scale);
+  const innerPad = Math.round(30 * scale);
+
+  const boxWidth = Math.min(Math.round(1120 * scale), width - padding * 2);
+  const boxHeight = lineHeight * 3 + innerPad * 2;    // 3 rows of text + vertical padding
+  const cornerRadius = Math.round(16 * scale);
+
+  // Position: bottom-right, clamped so it stays fully inside the image
+  const x = Math.max(padding, width - boxWidth - padding);
+  const y = Math.max(padding, height - boxHeight - padding);
+
+  // Column offsets (proportional to box width)
+  const col1 = x + innerPad;
+  const col1Val = col1 + Math.round(boxWidth * 0.11);
+  const col2 = x + Math.round(boxWidth * 0.50);
+  const col2Val = col2 + Math.round(boxWidth * 0.12);
+
+  const row1 = y + innerPad + fontSize;
+  const row2 = row1 + lineHeight;
+  const row3 = row2 + lineHeight;
 
   const svg = `
     <svg width="${width}" height="${height}">
       <defs>
         <style>
-          .watermark-text { fill: white; font-family: Arial, sans-serif; font-size: 40px; font-weight: bold; }
-          .watermark-label { fill: white; font-family: Arial, sans-serif; font-size: 40px; font-weight: bold; }
+          .wm-val { fill: white; font-family: Arial, sans-serif; font-size: ${fontSize}px; font-weight: bold; }
+          .wm-lbl { fill: rgba(255,255,255,0.85); font-family: Arial, sans-serif; font-size: ${fontSize}px; font-weight: bold; }
         </style>
       </defs>
-      <rect x="${x}" y="${y}" width="${boxWidth}" height="${boxHeight}" rx="24" ry="24" fill="rgba(0,0,0,0.7)"/>
-      <text x="${x + 40}" y="${y + 72}" class="watermark-label">Lat:</text>
-      <text x="${x + 160}" y="${y + 72}" class="watermark-text">${latStr}</text>
-      <text x="${x + 580}" y="${y + 72}" class="watermark-label">Long:</text>
-      <text x="${x + 720}" y="${y + 72}" class="watermark-text">${lngStr}</text>
-      <text x="${x + 40}" y="${y + 144}" class="watermark-label">Accuracy:</text>
-      <text x="${x + 280}" y="${y + 144}" class="watermark-text">${accStr}</text>
-      <text x="${x + 580}" y="${y + 144}" class="watermark-label">GPS:</text>
-      <text x="${x + 700}" y="${y + 144}" class="watermark-text">${sourceStr}</text>
-      <text x="${x + 40}" y="${y + 216}" class="watermark-label">Time:</text>
-      <text x="${x + 180}" y="${y + 216}" class="watermark-text">${timeStr}</text>
+      <rect x="${x}" y="${y}" width="${boxWidth}" height="${boxHeight}" rx="${cornerRadius}" ry="${cornerRadius}" fill="rgba(0,0,0,0.65)"/>
+      <text x="${col1}" y="${row1}" class="wm-lbl">Lat:</text>
+      <text x="${col1Val}" y="${row1}" class="wm-val">${latStr}</text>
+      <text x="${col2}" y="${row1}" class="wm-lbl">Long:</text>
+      <text x="${col2Val}" y="${row1}" class="wm-val">${lngStr}</text>
+      <text x="${col1}" y="${row2}" class="wm-lbl">Acc:</text>
+      <text x="${col1Val}" y="${row2}" class="wm-val">${accStr}</text>
+      <text x="${col2}" y="${row2}" class="wm-lbl">GPS:</text>
+      <text x="${col2Val}" y="${row2}" class="wm-val">${sourceStr}</text>
+      <text x="${col1}" y="${row3}" class="wm-lbl">Time:</text>
+      <text x="${col1Val}" y="${row3}" class="wm-val">${timeStr}</text>
     </svg>
   `;
 
