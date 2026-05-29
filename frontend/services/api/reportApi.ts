@@ -67,6 +67,26 @@ export const reportApi = {
       }
     }
 
+    // 2b. ACCURACY GATE — reject if ANY geotron device reports accuracy > 50cm (0.5m)
+    const ACCURACY_THRESHOLD_M = 0.5; // 50 cm
+    const failingDevices: { deviceId: string; role: string; accuracy: number }[] = [];
+
+    for (const [deviceId, device] of Object.entries(geotronDataParsed) as [string, any][]) {
+      if (device?.accuracy != null && device.accuracy > ACCURACY_THRESHOLD_M) {
+        const role = roleMap[deviceId] || 'UNKNOWN';
+        failingDevices.push({ deviceId, role, accuracy: device.accuracy });
+      }
+    }
+
+    if (failingDevices.length > 0) {
+      const details = failingDevices
+        .map(d => `• ${d.role} (${d.deviceId}): ${(d.accuracy * 100).toFixed(1)} cm`)
+        .join('\n');
+      throw new Error(
+        `GPS accuracy too low. The following device(s) exceed the 50 cm threshold:\n${details}\n\nPlease wait for better satellite fix or reposition the Geotron device(s) and try again.`
+      );
+    }
+
     // 3. Build role-keyed geotronLocations: { MID: {...}, LEFT: {...}, RIGHT: {...} }
     const roleKeyedLocations = processedLocation.roleKeyedLocations;
 

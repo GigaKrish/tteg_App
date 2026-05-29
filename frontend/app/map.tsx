@@ -213,6 +213,30 @@ export default function MapScreen() {
             }
         }
 
+        // BLOCK: Accuracy gate — check BEFORE locking so the user gets instant feedback
+        // Only check on first entry (when data is about to be locked from live polling)
+        if (!lockedGeotronData && !DEV_BYPASS_GEOTRON) {
+            const ACCURACY_THRESHOLD_M = 0.5; // 50 cm
+            const failingDevices: { name: string; accuracy: number }[] = [];
+
+            for (const [deviceId, device] of Object.entries(multiDeviceData) as [string, any][]) {
+                if (device?.accuracy != null && device.accuracy > ACCURACY_THRESHOLD_M) {
+                    failingDevices.push({ name: deviceId, accuracy: device.accuracy });
+                }
+            }
+
+            if (failingDevices.length > 0) {
+                const details = failingDevices
+                    .map(d => `• ${d.name}: ${(d.accuracy * 100).toFixed(1)} cm`)
+                    .join('\n');
+                Alert.alert(
+                    "⚠️ Accuracy Too Low",
+                    `The following device(s) exceed the 50 cm accuracy threshold:\n\n${details}\n\nPlease wait for a better satellite fix or reposition the device(s) before starting a report.`
+                );
+                return;
+            }
+        }
+
         // Lock the geotron data for the duration of this survey so we jump off the polling loop 
         // and survive if the hardware disconnects mid-way
         if (!lockedGeotronData) {
@@ -389,6 +413,16 @@ export default function MapScreen() {
                 // Check if user manually cancelled
                 if (result.error === 'Upload cancelled by user') {
                     // Do not close form or clear data, just let the user stay on the form
+                    return;
+                }
+
+                // Check if this is an accuracy validation rejection — keep form open so user can retry
+                if (result.error?.includes('GPS accuracy too low')) {
+                    Alert.alert(
+                        "⚠️ Accuracy Too Low",
+                        result.error + "\n\nThe report was NOT uploaded. Please improve the satellite fix and tap Submit again.",
+                    );
+                    // Do NOT reset form or photos — user should retry after accuracy improves
                     return;
                 }
 

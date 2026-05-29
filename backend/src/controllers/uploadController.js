@@ -51,6 +51,26 @@ exports.createReport = async (req, res, next) => {
     // Parse accuracy
     const accuracyValue = accuracy ? parseFloat(accuracy) : null;
 
+    // ACCURACY GATE — reject if any geotron device has accuracy > 50cm (0.5m)
+    const ACCURACY_THRESHOLD_M = 0.5;
+    if (parsedGeotrons && typeof parsedGeotrons === 'object') {
+      const failingDevices = [];
+      for (const [role, device] of Object.entries(parsedGeotrons)) {
+        if (device && device.accuracy != null && device.accuracy > ACCURACY_THRESHOLD_M) {
+          failingDevices.push({ role, accuracy: device.accuracy });
+        }
+      }
+      if (failingDevices.length > 0) {
+        cleanupTempFiles(req.files);
+        const details = failingDevices
+          .map(d => `${d.role}: ${(d.accuracy * 100).toFixed(1)} cm`)
+          .join(', ');
+        return res.status(400).json({
+          error: `GPS accuracy too low. Device(s) exceeding 50 cm threshold: ${details}. Please improve accuracy and try again.`
+        });
+      }
+    }
+
     // Generate unique ID for this report before uploading photos
     // This allows us to group photos by report ID in storage
     const reportUniqueId = await Report.generateUniqueId();
